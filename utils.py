@@ -1,7 +1,7 @@
 import socket
 
 
-def send(conn, str):
+def send(conn: socket.socket, str: str):
     conn.send(bytes(str + '\0', 'utf8'))
 
 

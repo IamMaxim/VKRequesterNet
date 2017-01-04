@@ -7,7 +7,7 @@ class vkapi:
     def sendRequest(self, name, useToken, args):
         req = 'https://api.vk.com/method/' + name + "?v=5.60"
         if useToken:
-            req += '&' + self.token
+            req += '&access_token=' + self.token
         for arg in args:
             req += '&' + arg
         return self.sendRequestByURL(req)

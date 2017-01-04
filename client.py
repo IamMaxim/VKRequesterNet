@@ -4,7 +4,7 @@ import utils
 import vkapi
 import json
 
-vk = vkapi.vkapi(open('access_token.txt').read())
+vk = vkapi.vkapi(open('access_token.txt').read().strip('\n'))
 
 
 def processMessage(msg):
@@ -27,11 +27,12 @@ def startListening():
 sock = ssl.wrap_socket(socket.socket())
 sock.connect(('localhost', 46821))
 
-# utils.send(sock, 'STOP')
-# utils.send(sock, 'MESSAGE and some more text')
-# utils.send(sock, 'LISTENING')
-# startListening()
-utils.send(sock, 'MESSAGE' + json.dumps({'name': 'users.get', 'useToken': False, 'args': ['user_id=1', 'fields=first_name,last_name']}))
+command = input('Enter command: ')
+if command == 'sendtest':
+    utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.getDialogs', 'useToken': True, 'args': ['count=1']}))
+else:
+    utils.send(sock, command)
 
+print(utils.read(sock))
 print('Shutting down...')
 sock.close()
