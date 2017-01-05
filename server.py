@@ -5,10 +5,12 @@ import utils
 import subprocess
 import json
 import user
+import hashlib
 
 # list with all active listeners
 clients = []
 users = {}
+hasher = hashlib.md5()
 
 
 def loadUsers():
@@ -53,7 +55,8 @@ def register(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
-    passhash = hash(utils.read(client))
+    hasher.update(utils.read(client))
+    passhash = hasher.hexdigest()
     print('passhash:', passhash)
     utils.send(client, 'Enter nickname: ')
     nick = utils.read(client)
@@ -68,7 +71,8 @@ def login(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
-    passhash = hash(utils.read(client))
+    hasher.update(utils.read(client))
+    passhash = hasher.hexdigest()
     print('passhash:', passhash)
     u = users[login]
     if u:
@@ -81,8 +85,10 @@ def login(client, addr, req):
 
 
 def serve_client(client, addr):
+    print('serving', addr[0] + ':' + str(addr[1]))
     try:
         client.settimeout(None)
+        user = 'err'
         req = utils.read(client)
         # client is ready to receive VK requests
         if req == 'LISTENING':
@@ -97,7 +103,7 @@ def serve_client(client, addr):
 
                 if req == 'REGISTER':
                     user = register(client, addr, req)
-                if not user:
+                if user == 'err':
                     user = login(client, addr, req)
                 if user == 'err':
                     utils.send(client, 'STOP')
@@ -120,7 +126,8 @@ def serve_client(client, addr):
                         print('Executing command "', comm, '" from ', addr[0], sep='')
                         exec(client, comm)
                 req = utils.read(client)
-    except:
+    except Exception:
+        Exception
         client.close()
 
 
