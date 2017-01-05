@@ -142,11 +142,14 @@ def start_server(port):
     print('Server started at port', port)
 
     while needToRun:
-        # accept new connection
-        conn, addr = sock.accept()
+        try:
+            # accept new connection
+            conn, addr = sock.accept()
 
-        # handle client in another thread
-        threading.Thread(target=serve_client, args=(conn, addr)).start()
+            # handle client in another thread
+            threading.Thread(target=serve_client, args=(conn, addr)).start()
+        except Exception:
+            print('Error accepting socket')
 
     print('Shutting down server...')
     # close connection with all listeners
