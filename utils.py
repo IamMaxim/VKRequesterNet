@@ -2,6 +2,7 @@ import socket
 
 
 def send(conn: socket.socket, str: str):
+    print('sending:', str)
     conn.send(bytes(str + '\0', 'utf8'))
 
 
@@ -19,4 +20,5 @@ def read(conn):
             if bytes == b'':
                 return 'err'
             break
+    print('read:', bytes.decode('utf8'))
     return bytes.decode('utf8')
