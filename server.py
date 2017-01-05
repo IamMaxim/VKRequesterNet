@@ -11,6 +11,20 @@ import hashlib
 clients = []
 users = {}
 hasher = hashlib.md5()
+global sock
+
+
+def shutdown():
+    print('Shutting down server...')
+    # close connection with all listeners
+    for c in clients:
+        utils.send(c, 'Server is shutting down...')
+        utils.send(c, 'STOP')
+        c.close()
+    saveUsers()
+    sock.close()
+    print('socket closed')
+    raise SystemExit(0)
 
 
 def loadUsers():
@@ -55,7 +69,7 @@ def register(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
-    hasher.update(utils.read(client))
+    hasher.update(utils.read(client).encode())
     passhash = hasher.hexdigest()
     print('passhash:', passhash)
     utils.send(client, 'Enter nickname: ')
@@ -71,21 +85,22 @@ def login(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
-    hasher.update(utils.read(client))
+    hasher.update(utils.read(client).encode())
     passhash = hasher.hexdigest()
     print('passhash:', passhash)
-    u = users[login]
-    if u:
+    if users.__contains__(login):
+        print('Trying to login as', login)
+        u = users[login]
         if passhash == u.passhash:
-            utils.send(client, 'Logged in as ' + u.nickname)
+            print('Logged in successfully')
+            utils.send(client, 'Logged in as ' + u.nick)
             return u
-        else:
-            utils.send(client, 'Login failed')
-            return 'err'
+
+        utils.send(client, 'Login failed')
+        return 'err'
 
 
 def serve_client(client, addr):
-    print('serving', addr[0] + ':' + str(addr[1]))
     try:
         client.settimeout(None)
         user = 'err'
@@ -113,8 +128,7 @@ def serve_client(client, addr):
                 if req == 'STOP':
                     if user.permission >= 2:
                         print('Received STOP command from', addr[0])
-                        global needToRun
-                        needToRun = False
+                        shutdown()
                     else:
                         utils.send(client, 'You do not have permission to do that')
                 if req.startswith('MESSAGE'):
@@ -127,12 +141,11 @@ def serve_client(client, addr):
                         exec(client, comm)
                 req = utils.read(client)
     except Exception:
-        Exception
         client.close()
 
 
-needToRun = True
 def start_server(port):
+    global sock
     sock = ssl.wrap_socket(socket.socket(), 'server.key', 'server.crt', True)
     # handle situation when port is already in use
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -141,25 +154,18 @@ def start_server(port):
     sock.listen(1024)
     print('Server started at port', port)
 
-    while needToRun:
+    while threading.active_count() > 0:
         try:
             # accept new connection
             conn, addr = sock.accept()
 
             # handle client in another thread
-            threading.Thread(target=serve_client, args=(conn, addr)).start()
-        except Exception:
-            print('Error accepting socket')
-
-    print('Shutting down server...')
-    # close connection with all listeners
-    for c in clients:
-        utils.send(c, 'Server is shutting down...')
-        utils.send(c, 'STOP')
-        c.close()
-    sock.close()
+            t = threading.Thread(target=serve_client, args=(conn, addr))
+            t.setDaemon(True)
+            t.start()
+        except Exception as e:
+            print('Error accepting socket:', str(e))
 
 
 loadUsers()
 start_server(5003)
-saveUsers()

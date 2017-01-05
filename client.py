@@ -28,7 +28,7 @@ def startListening():
 
 
 sock = ssl.wrap_socket(socket.socket())
-sock.connect(('insomnia247.nl', 5003))
+sock.connect(('localhost', 5003))
 
 listener = threading.Thread(target=startListening)
 listener.start()
