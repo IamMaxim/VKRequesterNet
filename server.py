@@ -61,7 +61,6 @@ def register(client, addr, req):
     users[u.login] = u
     utils.send(client, 'Registered successfully')
     print('Registered user', u.nick)
-    saveUsers()
     return u
 
 
@@ -152,5 +151,5 @@ def start_server(port):
 
 
 loadUsers()
-start_server(46821)
+start_server(5003)
 saveUsers()
