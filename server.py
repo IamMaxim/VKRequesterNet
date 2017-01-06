@@ -1,17 +1,28 @@
 import socket
 import ssl
 import threading
+import traceback
+
 import utils
 import subprocess
 import json
 import user
 import hashlib
+import os
 
 # list with all active listeners
 clients = []
 users = {}
-hasher = hashlib.md5()
 global sock
+
+
+def sendTo(client: socket, message: str):
+    try:
+        utils.send(client, message)
+    except socket.error:
+        # socket closed; remove it from listeners
+        print('Removing listener')
+        clients.remove(client)
 
 
 def shutdown():
@@ -23,6 +34,7 @@ def shutdown():
         c.close()
     saveUsers()
     sock.close()
+    os._exit(0)
     print('socket closed')
     raise SystemExit(0)
 
@@ -54,24 +66,19 @@ def exec(client: socket.socket, command: str):
 
 
 def message(client, addr, req):
-    print('sending to all message "', req, '" from ', addr[0], sep='')
+    print('Sending to all message "', req, '" from ', addr[0], sep='')
     # todo: add check
     for c in clients:
-        try:
-            utils.send(c, req)
-        except socket.error:
-            # socket closed; remove it from listeners
-            print('Removing listener', addr[0])
-            clients.remove(c)
+        threading.Thread(target=sendTo, args=(c, req)).start()
 
 
 def register(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
+    hasher = hashlib.md5()
     hasher.update(utils.read(client).encode())
     passhash = hasher.hexdigest()
-    print('passhash:', passhash)
     utils.send(client, 'Enter nickname: ')
     nick = utils.read(client)
     u = user.User(login=login, passhash=passhash, nick=nick, permission=0)
@@ -85,19 +92,28 @@ def login(client, addr, req):
     utils.send(client, 'Enter login: ')
     login = utils.read(client)
     utils.send(client, 'Enter password: ')
+    hasher = hashlib.md5()
     hasher.update(utils.read(client).encode())
     passhash = hasher.hexdigest()
-    print('passhash:', passhash)
-    if users.__contains__(login):
-        print('Trying to login as', login)
+    try:
         u = users[login]
         if passhash == u.passhash:
-            print('Logged in successfully')
             utils.send(client, 'Logged in as ' + u.nick)
             return u
-
+        else:
+            return 'err'
+    except Exception:
         utils.send(client, 'Login failed')
         return 'err'
+
+
+def setperm(client, addr, req):
+    args = req.split(' ')
+    try:
+        users[args[0]].permission = int(args[1])
+        utils.send(client, 'Permission changed successfully')
+    except Exception:
+        utils.send(client, 'Error changing permission')
 
 
 def serve_client(client, addr):
@@ -118,12 +134,8 @@ def serve_client(client, addr):
 
                 if req == 'REGISTER':
                     user = register(client, addr, req)
-                if user == 'err':
+                while user == 'err':
                     user = login(client, addr, req)
-                if user == 'err':
-                    utils.send(client, 'STOP')
-                    client.close()
-                    return
 
                 if req == 'STOP':
                     if user.permission >= 2:
@@ -139,8 +151,13 @@ def serve_client(client, addr):
                         comm = req[4:]
                         print('Executing command "', comm, '" from ', addr[0], sep='')
                         exec(client, comm)
+                elif req.startswith('SETPERM'):
+                    if user.permission >= 2:
+                        setperm(client, addr, req[7:])
+
                 req = utils.read(client)
     except Exception:
+        traceback.print_exc()
         client.close()
 
 
@@ -154,7 +171,7 @@ def start_server(port):
     sock.listen(1024)
     print('Server started at port', port)
 
-    while threading.active_count() > 0:
+    while True:
         try:
             # accept new connection
             conn, addr = sock.accept()

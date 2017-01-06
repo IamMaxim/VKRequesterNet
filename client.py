@@ -1,3 +1,4 @@
+import os
 import socket
 import ssl
 import utils
@@ -14,14 +15,14 @@ def processMessage(msg):
 
 
 def startListening():
-    print('starting listening...')
     while True:
-        # read request or plain text
+        # read message from server
         res = utils.read(sock)
         print(res)
         if res == '' or res == 'err' or res == 'STOP':
             print('Server closed connection')
-            break
+            sock.close()
+            os._exit(0)
         if res.startswith('MESSAGE'):
             # remove MESSAGE and process
             processMessage(res[7:])
@@ -29,10 +30,8 @@ def startListening():
 
 sock = ssl.wrap_socket(socket.socket())
 sock.connect(('localhost', 5003))
-
-listener = threading.Thread(target=startListening)
-listener.start()
-print('listener thread started.')
+# start listener thread
+threading.Thread(target=startListening).start()
 while True:
     command = input()
     if command == 'exit' or command == 'quit':
