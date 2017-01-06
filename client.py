@@ -27,9 +27,13 @@ def startListening():
             # remove MESSAGE and process
             processMessage(res[7:])
 
-
+try:
+    addr = open('address.txt', 'r').readline().split(':')
+except FileNotFoundError:
+    print('File "address.txt" not found. Can\'t connect.')
+    raise SystemExit(0)
 sock = ssl.wrap_socket(socket.socket())
-sock.connect(('localhost', 5003))
+sock.connect((addr[0], int(addr[1])))
 # start listener thread
 threading.Thread(target=startListening).start()
 while True:

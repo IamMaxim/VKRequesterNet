@@ -184,5 +184,11 @@ def start_server(port):
             print('Error accepting socket:', str(e))
 
 
+try:
+    addr = int(open('serverport.txt', 'r').read())
+except FileNotFoundError:
+    print('File "serverport.txt not found. Can\'t start server."')
+    raise SystemExit(0)
+
 loadUsers()
 start_server(5003)
