@@ -42,7 +42,7 @@ while True:
         # todo: kill thread
         break
     if command == 'sendtest':
-        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.getDialogs', 'useToken': True, 'args': ['count=1']}))
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=test test', 'user_id=371331308']}))
     else:
         if command != '':
             utils.send(sock, command)

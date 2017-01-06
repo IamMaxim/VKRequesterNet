@@ -10,6 +10,7 @@ class vkapi:
             req += '&access_token=' + self.token
         for arg in args:
             req += '&' + arg
+        req = req.replace(' ', '%20').replace('\n', '')
         return self.sendRequestByURL(req)
 
     def sendRequestByURL(self, req):
