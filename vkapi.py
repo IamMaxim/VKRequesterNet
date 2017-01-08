@@ -24,6 +24,7 @@ class VKApi:
         res = urllib.request.urlopen(req).read()
         while res.startswith(b'{"error"'):
             errcode = json.loads(res.decode('utf8'))['error']['error_code']
+            print(errcode)
             # check if this is "too many requests per second" error
             if errcode != 6:
                 return 'err'
