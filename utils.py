@@ -2,7 +2,7 @@ import socket
 
 
 def send(conn: socket.socket, str: str):
-    conn.send(bytes(str + '\0', 'utf8'))
+    conn.sendall(bytes(str, 'utf8') + b'\0')
 
 
 def read(conn):

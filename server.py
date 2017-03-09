@@ -157,7 +157,7 @@ def serve_client(client, addr):
 
                 req = utils.read(client)
     except Exception:
-        traceback.print_exc()
+        # traceback.print_exc()
         client.close()
 
 

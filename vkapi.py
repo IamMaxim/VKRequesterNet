@@ -1,6 +1,8 @@
 import urllib.request
+from urllib.parse import quote
 import json
 import time
+import requests
 
 
 class VKApi:
@@ -18,19 +20,20 @@ class VKApi:
             req += '&' + arg
         return self.sendRequestByURL(req)
 
-    def sendRequestByURL(self, req):
-        req = req.replace('\n', '').replace(' ', '%20')
-        print('sending', req)
-        res = urllib.request.urlopen(req).read()
-        while res.startswith(b'{"error"'):
-            errcode = json.loads(res.decode('utf8'))['error']['error_code']
+    def sendRequestByURL(self, req: str):
+        req = req.replace('\n', '<br>').replace(' ', '%20')
+        print('gonna send', req)
+        # res = urllib.request.urlopen(req).read()
+        res = requests.get(req).text
+        while res.startswith('{"error"'):
+            errcode = json.loads(res)['error']['error_code']
             print(errcode)
             # check if this is "too many requests per second" error
             if errcode != 6:
                 return 'err'
             time.sleep(0.4)
             res = urllib.request.urlopen(req).read()
-        return res.decode('utf8')
+        return res
 
 
 class Messages:
