@@ -5,8 +5,9 @@ import utils
 import vkapi
 import json
 import threading
+import time
 
-vk = vkapi.vkapi(open('access_token.txt').read().strip('\n'))
+vk = vkapi.VKApi(open('access_token.txt').read().strip('\n'))
 
 
 def processMessage(msg):
@@ -39,10 +40,18 @@ threading.Thread(target=startListening).start()
 while True:
     command = input()
     if command == 'exit' or command == 'quit':
-        # todo: kill thread
         break
     if command == 'sendtest':
-        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=test test', 'user_id=371331308']}))
+        id = '314118839'
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=%28%28%28', 'user_id=' + id]}))
+        time.sleep(1)
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=%29%29%29', 'user_id=' + id]}))
+        time.sleep(1)
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=%7C%7C%7C', 'user_id=' + id]}))
+        time.sleep(1)
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=%5C%7C%2F', 'user_id=' + id]}))
+        time.sleep(1)
+        utils.send(sock, 'MESSAGE' + json.dumps({'name': 'messages.send', 'useToken': True, 'args': ['message=%2F%7C%5C', 'user_id=' + id]}))
     else:
         if command != '':
             utils.send(sock, command)
@@ -50,3 +59,4 @@ while True:
 # print(utils.read(sock))
 print('Shutting down...')
 sock.close()
+os._exit(0)
