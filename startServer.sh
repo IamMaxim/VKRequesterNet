@@ -1,0 +1,3 @@
+#!/bin/bash
+echo Starting server...
+python3 -u server.py >> log.txt &
